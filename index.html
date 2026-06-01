@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ติดตามงานพี่เลี้ยง · ปลูกเพื่อเมือง</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --bg:#f4f1eb;--surface:#fff;--surface2:#f9f7f3;--line:#e0dbd0;
+  --ink:#1c1e26;--ink2:#3a3d4a;--muted:#7c7a72;
+  --green:#2a6e47;--green-l:#ebf5f0;--green-m:#4da876;
+  --amber:#a05c00;--amber-l:#fff4e3;--amber-m:#e09030;
+  --red:#b52c22;--red-l:#fdecea;--red-m:#d94f42;
+  --blue:#1a4f8a;--blue-l:#e8f0fa;--blue-m:#4278c0;
+  --purple:#5c3a8a;--r:10px;
+  --shadow:0 1px 4px rgba(28,30,38,.07),0 0 0 1px rgba(28,30,38,.05);
+  --shadow-md:0 4px 16px rgba(28,30,38,.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;font-size:14px}
+.nav{position:sticky;top:0;z-index:300;background:var(--ink);display:flex;align-items:stretch;height:50px;border-bottom:3px solid var(--green-m)}
+.nav-brand{display:flex;align-items:center;gap:8px;padding:0 20px;border-right:1px solid rgba(255,255,255,.1);font-size:13px;font-weight:700;color:#fff;white-space:nowrap;flex-shrink:0}
+.brand-dot{width:8px;height:8px;border-radius:50%;background:var(--green-m);animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.4)}}
+.nav-tabs{display:flex;overflow-x:auto;scrollbar-width:none}.nav-tabs::-webkit-scrollbar{display:none}
+.ntab{display:flex;align-items:center;gap:5px;padding:0 16px;font-size:12px;font-weight:600;color:rgba(255,255,255,.5);cursor:pointer;white-space:nowrap;flex-shrink:0;border-bottom:3px solid transparent;margin-bottom:-3px;transition:all .15s}
+.ntab:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.04)}.ntab.active{color:#fff;border-bottom-color:var(--green-m)}
+.nav-end{margin-left:auto;display:flex;align-items:center;gap:8px;padding:0 16px;flex-shrink:0}
+.month-tag{padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.6);transition:all .15s}
+.month-tag:hover,.month-tag.active{background:var(--green-m);border-color:var(--green-m);color:#fff}
+main{max-width:1300px;margin:0 auto;padding:22px 18px}
+.page{display:none}.page.active{display:block}
+.card{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);padding:16px 18px}
+.card-title{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:13px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.g5{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px}
+@media(max-width:1050px){.g5{grid-template-columns:1fr 1fr 1fr}}
+@media(max-width:800px){.g5{grid-template-columns:1fr 1fr}.g2{grid-template-columns:1fr}}
+.mc{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);padding:14px 16px;border-top:3px solid var(--line)}
+.mc.c-green{border-top-color:var(--green-m)}.mc.c-amber{border-top-color:var(--amber-m)}.mc.c-red{border-top-color:var(--red-m)}.mc.c-blue{border-top-color:var(--blue-m)}.mc.c-purple{border-top-color:#8055c8}
+.mc-label{font-size:11px;color:var(--muted);font-weight:500;margin-bottom:5px}
+.mc-val{font-size:26px;font-weight:700;line-height:1;font-family:'IBM Plex Mono',monospace}
+.mc.c-green .mc-val{color:var(--green)}.mc.c-amber .mc-val{color:var(--amber)}.mc.c-red .mc-val{color:var(--red)}.mc.c-blue .mc-val{color:var(--blue)}.mc.c-purple .mc-val{color:var(--purple)}
+.mc-sub{font-size:11px;color:var(--muted);margin-top:4px}
+.mc-bar{height:4px;border-radius:2px;background:var(--line);margin-top:10px;overflow:hidden}
+.mc-bar-fill{height:100%;border-radius:2px}
+.score-pill{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;font-family:'IBM Plex Mono',monospace}
+.s5{background:#cef5df;color:#1a5c34}.s4{background:var(--green-l);color:var(--green)}.s3{background:var(--amber-l);color:var(--amber)}.s2{background:#ffe8d6;color:#7a3800}.s1{background:var(--red-l);color:var(--red)}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700}
+.badge-green{background:var(--green-l);color:var(--green)}.badge-amber{background:var(--amber-l);color:var(--amber)}.badge-red{background:var(--red-l);color:var(--red)}.badge-blue{background:var(--blue-l);color:var(--blue)}
+.hm-wrap{overflow-x:auto}
+.hm-table{border-collapse:collapse;min-width:900px;width:100%;font-size:11px}
+.hm-table thead th{padding:5px 4px;text-align:center;font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line);white-space:nowrap}
+.hm-table thead th.row-head{text-align:left;min-width:140px;padding-left:8px}
+.hm-table thead th.group-head{font-size:10px;color:var(--ink);background:var(--surface2);border-bottom:2px solid var(--line);border-top:1px solid var(--line);padding:5px 8px;text-align:left}
+.hm-table td{padding:4px 3px;text-align:center;border-bottom:1px solid rgba(224,219,208,.5)}
+.hm-table td.row-head{text-align:left;padding-left:8px;white-space:nowrap;font-weight:500;font-size:12px}
+.hm-table tr:hover td{background:var(--surface2)}
+.hm-cell{width:28px;height:28px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;cursor:default;transition:transform .1s;font-family:'IBM Plex Mono',monospace;font-weight:600}
+.hm-cell:hover{transform:scale(1.3)}
+.hm-5{background:#d0f0de;color:#1a5c34}.hm-4{background:#e6f5ed;color:#2a6e47}.hm-3{background:var(--amber-l);color:var(--amber)}.hm-2{background:#fde8d4;color:#7a3800}.hm-1{background:var(--red-l);color:var(--red)}.hm-0{background:var(--line);color:var(--muted);opacity:.6}
+.alert-box{border-radius:8px;padding:10px 13px;font-size:12px;border-left:3px solid;margin-bottom:8px;display:flex;align-items:flex-start;gap:9px}
+.alert-red{background:var(--red-l);border-color:var(--red-m)}.alert-amber{background:var(--amber-l);border-color:var(--amber-m)}.alert-green{background:var(--green-l);border-color:var(--green-m)}
+.alert-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+.alert-body strong{font-weight:700;display:block;margin-bottom:2px}
+.prog-row{margin-bottom:10px}
+.prog-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}
+.prog-track{height:7px;background:var(--line);border-radius:4px;overflow:hidden}
+.prog-fill{height:100%;border-radius:4px}
+.risk-table{width:100%;border-collapse:collapse;font-size:11px}
+.risk-table th{padding:6px 8px;text-align:left;font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border-bottom:2px solid var(--line)}
+.risk-table td{padding:7px 8px;border-bottom:1px solid rgba(224,219,208,.5)}
+.risk-table tr:hover td{background:var(--surface2)}
+.risk-g{background:var(--green-l);color:var(--green);border:1px solid #a8dfc0;padding:2px 6px;border-radius:10px;font-size:10px;font-weight:700;display:inline-block}
+.risk-a{background:var(--amber-l);color:var(--amber);border:1px solid #f5c880;padding:2px 6px;border-radius:10px;font-size:10px;font-weight:700;display:inline-block}
+.risk-r{background:var(--red-l);color:var(--red);border:1px solid #f5ada8;padding:2px 6px;border-radius:10px;font-size:10px;font-weight:700;display:inline-block}
+.form-block{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);padding:22px 24px;margin-bottom:16px}
+.form-block-title{font-size:13px;font-weight:700;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.frow.full{grid-template-columns:1fr}
+.fgroup label{display:block;font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:5px}
+.fgroup select,.fgroup input,.fgroup textarea{width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:7px;font-family:'Sarabun',sans-serif;font-size:13px;color:var(--ink);background:var(--surface2);outline:none;transition:border-color .15s}
+.fgroup select:focus,.fgroup input:focus,.fgroup textarea:focus{border-color:var(--green);background:#fff}
+.fgroup textarea{min-height:68px;resize:vertical}
+.section-group{background:var(--surface2);border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin-bottom:12px}
+.section-group-title{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.item-row{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.item-row:last-child{border-bottom:none;padding-bottom:0}
+.item-num{width:26px;height:26px;border-radius:50%;background:var(--line);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.item-body{flex:1}
+.item-label{font-size:13px;font-weight:500;line-height:1.45;margin-bottom:3px}
+.item-desc{font-size:11px;color:var(--muted);line-height:1.4;margin-bottom:8px}
+.score-row{display:flex;gap:6px;flex-wrap:wrap}
+.score-opt{flex:1;min-width:52px;padding:7px 4px;text-align:center;border:1.5px solid var(--line);border-radius:7px;cursor:pointer;background:#fff;transition:all .15s;font-size:12px;font-weight:700;font-family:'IBM Plex Mono',monospace;user-select:none}
+.score-opt:hover{border-color:var(--ink);transform:translateY(-1px)}
+.score-opt .slabel{font-size:9px;font-family:'Sarabun',sans-serif;font-weight:400;color:var(--muted);display:block;margin-top:2px;line-height:1.2}
+.score-opt.sel-1{background:var(--red);border-color:var(--red);color:#fff}.score-opt.sel-1 .slabel{color:rgba(255,255,255,.8)}
+.score-opt.sel-2{background:#d45530;border-color:#d45530;color:#fff}.score-opt.sel-2 .slabel{color:rgba(255,255,255,.8)}
+.score-opt.sel-3{background:var(--amber-m);border-color:var(--amber-m);color:#fff}.score-opt.sel-3 .slabel{color:rgba(255,255,255,.8)}
+.score-opt.sel-4{background:var(--green-m);border-color:var(--green-m);color:#fff}.score-opt.sel-4 .slabel{color:rgba(255,255,255,.8)}
+.score-opt.sel-5{background:var(--green);border-color:var(--green);color:#fff}.score-opt.sel-5 .slabel{color:rgba(255,255,255,.8)}
+.risk-opt-group{display:flex;gap:6px;flex-wrap:wrap}
+.risk-opt{padding:5px 11px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid var(--line);background:#fff;transition:all .15s;user-select:none}
+.risk-opt:hover{transform:translateY(-1px)}
+.risk-opt.r-green{border-color:var(--green);color:var(--green);background:var(--green-l)}
+.risk-opt.r-amber{border-color:var(--amber-m);color:var(--amber);background:var(--amber-l)}
+.risk-opt.r-red{border-color:var(--red-m);color:var(--red);background:var(--red-l)}
+.risk-opt.sel{box-shadow:0 0 0 2px currentColor}
+.btn-submit{width:100%;padding:14px;border:none;border-radius:8px;background:var(--green);color:#fff;font-family:'Sarabun',sans-serif;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .15s;margin-top:4px}
+.btn-submit:hover{background:var(--ink)}
+.btn-note{text-align:center;font-size:11px;color:var(--muted);margin-top:8px}
+.chart-wrap{position:relative}
+.tl{position:relative;padding-left:36px}
+.tl::before{content:'';position:absolute;left:11px;top:0;bottom:0;width:2px;background:var(--line)}
+.tl-item{position:relative;margin-bottom:14px}
+.tl-dot{position:absolute;left:-25px;top:0;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;border:2px solid var(--bg);z-index:1}
+.tl-dot.g{background:var(--green-l)}.tl-dot.a{background:var(--amber-l)}.tl-dot.r{background:var(--red-l)}
+.tl-body{background:#fff;border-radius:8px;padding:10px 14px;box-shadow:var(--shadow)}
+.tl-body strong{font-weight:700;font-size:13px;display:block;margin-bottom:3px}
+.tl-body .tl-meta{font-size:11px;color:var(--muted)}
+.dt{width:100%;border-collapse:collapse;font-size:12px}
+.dt th{padding:7px 10px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border-bottom:2px solid var(--line)}
+.dt td{padding:7px 10px;border-bottom:1px solid rgba(224,219,208,.5);vertical-align:middle}
+.dt tr:hover td{background:var(--surface2)}
+.note-card{background:var(--amber-l);border-left:3px solid var(--amber-m);border-radius:0 8px 8px 0;padding:12px 15px;font-size:12px;line-height:1.7;margin-bottom:8px}
+.note-card strong{display:block;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--amber);margin-bottom:4px}
+.toast{position:fixed;bottom:22px;right:22px;z-index:999;background:var(--ink);color:#fff;padding:13px 18px;border-radius:10px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:9px;box-shadow:var(--shadow-md);transform:translateY(60px);opacity:0;transition:all .3s cubic-bezier(.4,0,.2,1)}
+.toast.show{transform:translateY(0);opacity:1}.toast.ok{border-left:3px solid var(--green-m)}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
+
+
+.submit-loading{display:none;text-align:center;padding:14px;color:var(--muted);font-size:13px}
+.submit-error{display:none;background:var(--red-l);border-left:3px solid var(--red-m);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--red);margin-top:8px}
+.config-banner{background:var(--amber-l);border:1.5px solid var(--amber-m);border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:12px;display:flex;gap:10px;align-items:flex-start}
+.config-banner strong{display:block;font-weight:700;margin-bottom:4px}
+.config-input{width:100%;padding:8px 12px;border:1.5px solid var(--amber-m);border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:11px;margin-top:6px;outline:none;background:#fff}
+.config-input:focus{border-color:var(--green)}
+.req-star{color:var(--red);margin-left:2px}
+.form-required{font-size:11px;color:var(--muted);margin-bottom:14px}
+.validation-msg{font-size:11px;color:var(--red);margin-top:4px;display:none}
+.fgroup.error select,.fgroup.error input{border-color:var(--red)}
+.fgroup.error .validation-msg{display:block}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-brand"><span class="brand-dot"></span>🌱 ปลูกเพื่อเมือง</div>
+  <div class="nav-tabs">
+    <div class="ntab active" onclick="P('dash')">📊 Dashboard</div>
+    <div class="ntab" onclick="P('form')">📝 กรอกข้อมูล</div>
+    <div class="ntab" onclick="P('hist')">🕐 ประวัติ</div>
+    <div class="ntab" onclick="P('cfg')">⚙️ ตั้งค่า</div>
+  </div>
+  <div class="nav-end">
+    <div class="month-tag active" onclick="setMonth(this)">พ.ค. 68</div>
+    <div class="month-tag" onclick="setMonth(this)">เม.ย. 68</div>
+    <div class="month-tag" onclick="setMonth(this)">มี.ค. 68</div>
+  </div>
+</nav>
+<main>
+
+<!-- DASHBOARD -->
+<div class="page active" id="pg-dash">
+  <div class="g5">
+    <div class="mc c-green"><div class="mc-label">กรอกแล้วเดือนนี้</div><div class="mc-val" id="dash-submitted">–</div><div class="mc-sub">โครงการ</div><div class="mc-bar"><div class="mc-bar-fill" id="dash-prog-bar" style="width:0%;background:var(--green-m)"></div></div></div>
+    <div class="mc c-amber"><div class="mc-label">ยังไม่ได้กรอก</div><div class="mc-val" id="dash-missing">–</div><div class="mc-sub">โครงการ</div></div>
+    <div class="mc c-red"><div class="mc-label">ความเสี่ยงสูง</div><div class="mc-val" id="dash-risk">–</div><div class="mc-sub">โครงการ (🔴 ≥2 รายการ)</div></div>
+    <div class="mc c-blue"><div class="mc-label">คะแนนเฉลี่ย ส่วน2</div><div class="mc-val" id="dash-s2avg">–</div><div class="mc-sub">ความสามารถพี่เลี้ยง</div></div>
+    <div class="mc c-purple"><div class="mc-label">คะแนนเฉลี่ย ส่วน3</div><div class="mc-val" id="dash-s3avg" style="color:var(--purple)">–</div><div class="mc-sub">ผลลัพธ์โครงการย่อย</div></div>
+  </div>
+  <div class="g2">
+    <div class="card"><div class="card-title">⚠️ แจ้งเตือนสำคัญ</div><div id="alert-list"><div style="color:var(--muted);font-size:12px;padding:20px;text-align:center">กำลังโหลด...</div></div></div>
+    <div class="card"><div class="card-title">📈 ความคืบหน้ารายโครงการ (เรียงจากสูงสุด)</div><div id="prog-c" style="max-height:360px;overflow-y:auto"></div></div>
+  </div>
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title">🗺️ HEAT MAP — ส่วนที่ 2 · ความสามารถพี่เลี้ยง (1–5)</div>
+    <div style="display:flex;gap:12px;margin-bottom:10px;flex-wrap:wrap;font-size:11px">
+      <span><span class="hm-cell hm-5" style="width:18px;height:18px;font-size:9px;display:inline-flex;align-items:center;justify-content:center;border-radius:3px">5</span> ดีมาก</span>
+      <span><span class="hm-cell hm-4" style="width:18px;height:18px;font-size:9px;display:inline-flex;align-items:center;justify-content:center;border-radius:3px">4</span> ดี</span>
+      <span><span class="hm-cell hm-3" style="width:18px;height:18px;font-size:9px;display:inline-flex;align-items:center;justify-content:center;border-radius:3px">3</span> พอใช้</span>
+      <span><span class="hm-cell hm-2" style="width:18px;height:18px;font-size:9px;display:inline-flex;align-items:center;justify-content:center;border-radius:3px">2</span> ต้องปรับ</span>
+      <span><span class="hm-cell hm-1" style="width:18px;height:18px;font-size:9px;display:inline-flex;align-items:center;justify-content:center;border-radius:3px">1</span> ต้องเร่ง</span>
+    </div>
+    <div class="hm-wrap"><table class="hm-table" id="hm2"></table></div>
+  </div>
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title">🗺️ HEAT MAP — ส่วนที่ 3 · ผลลัพธ์โครงการย่อย (1–5)</div>
+    <div class="hm-wrap"><table class="hm-table" id="hm3"></table></div>
+  </div>
+  <div class="g2" style="margin-bottom:16px">
+    <div class="card"><div class="card-title">🚨 ตารางความเสี่ยง ส่วน4.1 (10 โครงการแรก)</div><div style="overflow-x:auto"><table class="risk-table" id="risk-tbl"></table></div></div>
+    <div class="card"><div class="card-title">📊 คะแนนเฉลี่ยรายหัวข้อ ส่วนที่ 2</div><div class="chart-wrap" style="height:230px"><canvas id="ch-s2"></canvas></div></div>
+  </div>
+  <div class="g2">
+    <div class="card"><div class="card-title">📊 คะแนนเฉลี่ยรายหัวข้อ ส่วนที่ 3</div><div class="chart-wrap" style="height:210px"><canvas id="ch-s3"></canvas></div></div>
+    <div class="card"><div class="card-title">📅 โครงการที่ส่งข้อมูล รายเดือน</div><div class="chart-wrap" style="height:210px"><canvas id="ch-trend"></canvas></div></div>
+  </div>
+</div>
+
+<!-- FORM -->
+<div class="page" id="pg-form">
+  <div class="config-banner" id="no-url-banner">
+    <div style="font-size:18px">⚠️</div>
+    <div><strong>ยังไม่ได้ตั้งค่า Google Apps Script URL</strong>
+    ข้อมูลจะยังไม่ถูกบันทึกจริง — ไปที่แท็บ ⚙️ ตั้งค่า แล้วใส่ URL ก่อนแจกให้พี่เลี้ยงกรอก</div>
+  </div>
+  <div class="form-required">ช่องที่มี <span class="req-star">*</span> จำเป็นต้องกรอก</div>
+  <div class="form-block">
+    <div class="form-block-title"><span style="background:var(--blue);color:#fff;padding:3px 9px;border-radius:4px;font-size:10px;font-weight:800;letter-spacing:.08em">ส่วนที่ 1</span>ข้อมูลพื้นฐาน</div>
+    <div class="frow">
+      <div class="fgroup" id="vg-proj"><label>รหัสโครงการย่อย <span class="req-star">*</span></label>
+        <select id="f-proj" onchange="clearErr('vg-proj')"><option value="">— เลือกโครงการ —</option><option value="01">01 · ชุมชน ก.ส.บ.พัฒนา</option>
+<option value="02">02 · ชุมชน อัมรินทร์ 3 ผัง 4</option>
+<option value="03">03 · ชุมชน สหกรณ์เคหสถานบ้านมั่นคงกัลยาณมิตร</option>
+<option value="04">04 · ชุมชนเฟื่องฟ้าพัฒนา</option>
+<option value="05">05 · ชุมชนธรรมสาธิตวิลล่า</option>
+<option value="06">06 · ชุมชน สหกรณ์ปทุมธานีโมเดล จำกัด</option>
+<option value="07">07 · ชุมชนบูรพา 7</option>
+<option value="08">08 · ชุมชนคลองหลวงเพิ่มพูน</option>
+<option value="09">09 · ชุมชนสหกรณ์เคหสถานฟ้าใหม่ร่วมใจ</option>
+<option value="10">10 · ชุมชน สามัคคีธรรมคลองสาม</option>
+<option value="11">11 · ชุมชนเคหสถานเมืองบางพูน</option>
+<option value="12">12 · ชุมชนสหกรณ์เคหสถานเก้ามงคลพัฒนา จำกัด</option>
+<option value="13">13 · กลุ่มวินจักรยานยนต์รับจ้างนันทนา</option>
+<option value="14">14 · ชุมชนสหกรณ์เคหสถานบ้านเกาะแก้ว จำกัด</option>
+<option value="15">15 · ชุมชนสหกรณ์เคหสถานบ้านมั่นคงบางด้วน</option>
+<option value="16">16 · ชุมชนเคสถานในคลองบางปลากด</option>
+<option value="17">17 · ชุมชน สหกรณ์เคหสถานชุมชนสร้างตนเอง จำกัด</option>
+<option value="18">18 · ชุมชนคุ้มทอง</option>
+<option value="19">19 · ชุมชนบึงพระราม 9</option>
+<option value="20">20 · ชุมชนทรัพย์สินใหม่</option>
+<option value="21">21 · ชุมชนเคหะคลอง 9</option>
+<option value="22">22 · ชุมชนสหกรณ์เคหสถานสามัคคีติวานนท์</option>
+<option value="23">23 · ชุมชนมิตรประชา</option>
+<option value="24">24 · ชุมชนบ้านมั่นคงสร้างสรรค์ นครรังสิต</option>
+<option value="25">25 · ชุมชนคลองปักหลัก</option>
+<option value="26">26 · ชุมชนร่มประดู่</option>
+<option value="27">27 · ชุมชนบ้านมั่นคงเจริญพัฒนา</option>
+<option value="28">28 · ชุมชนยิ้มประยูร</option>
+<option value="29">29 · ชุมชนบ้านมั่นคงฟาอีส บ้านใหม่</option>
+<option value="30">30 · ชุมชนหงสกุล</option>
+<option value="31">31 · ศูนย์พัฒนาเด็กก่อนวัยเรียนชุมชนวัดสวัสดิ์วารีสีมาราม</option>
+<option value="32">32 · ศูนย์พัฒนาเด็กเล็กชุมชนท่าน้ำน้ำสามเสน</option>
+<option value="33">33 · ศูนย์เด็กเล็กชุมชนวัดดาวดึงษาราม</option>
+<option value="34">34 · ศูนย์เด็กเล็กบางปลา</option>
+<option value="35">35 · ศูนย์เด็กเล็กอัลเอี๊ยะติซอม</option></select>
+        <div class="validation-msg">กรุณาเลือกโครงการ</div></div>
+      <div class="fgroup" id="vg-mentor"><label>ชื่อพี่เลี้ยง <span class="req-star">*</span></label>
+        <select id="f-mentor" onchange="clearErr('vg-mentor')"><option value="">— เลือกชื่อ —</option><option value="พี่อัง">พี่อัง</option>
+<option value="พี่น้อย">พี่น้อย</option>
+<option value="พี่ตุ่ม">พี่ตุ่ม</option>
+<option value="พี่จา">พี่จา</option>
+<option value="นิก">นิก</option>
+<option value="ต้น">ต้น</option></select>
+        <div class="validation-msg">กรุณาเลือกชื่อพี่เลี้ยง</div></div>
+    </div>
+    <div class="frow">
+      <div class="fgroup"><label>เดือนที่ส่งรายงาน <span class="req-star">*</span></label>
+        <select id="f-month"><option value="พฤษภาคม 2568">พฤษภาคม 2568</option><option value="เมษายน 2568">เมษายน 2568</option><option value="มีนาคม 2568">มีนาคม 2568</option><option value="กุมภาพันธ์ 2568">กุมภาพันธ์ 2568</option><option value="มกราคม 2568">มกราคม 2568</option></select></div>
+      <div class="fgroup"><label>วันที่กรอกข้อมูล</label><input type="date" id="f-date"></div>
+    </div>
+  </div>
+  <div class="form-block">
+    <div class="form-block-title"><span style="background:var(--green);color:#fff;padding:3px 9px;border-radius:4px;font-size:10px;font-weight:800;letter-spacing:.08em">ส่วนที่ 2</span>Checklist ติดตามการทำงานของพี่เลี้ยง <span style="font-size:11px;font-weight:400;color:var(--muted)">(คะแนน 1–5 ทุกข้อ)</span></div>
+    <div class="section-group"><div class="section-group-title">🧠 ความเข้าใจโครงการ &amp; การวางแผน (2.1–2.3)</div><div id="sg-2a"></div></div>
+    <div class="section-group"><div class="section-group-title">🗣️ การสื่อสาร การจัดเวที &amp; Baseline (2.4–2.6)</div><div id="sg-2b"></div></div>
+    <div class="section-group"><div class="section-group-title">🔄 ARE ทั้ง 4 รอบ · จัดเวที + ติดตามผล (2.7–2.10.1)</div><div id="sg-2c"></div></div>
+    <div class="section-group"><div class="section-group-title">📚 ถอดบทเรียน, HL, FL, การเงิน (2.11–2.14)</div><div id="sg-2d"></div></div>
+  </div>
+  <div class="form-block">
+    <div class="form-block-title"><span style="background:var(--purple);color:#fff;padding:3px 9px;border-radius:4px;font-size:10px;font-weight:800;letter-spacing:.08em">ส่วนที่ 3</span>Checklist ผลลัพธ์ของโครงการย่อย <span style="font-size:11px;font-weight:400;color:var(--muted)">(คะแนน 1–5 ทุกข้อ)</span></div>
+    <div class="section-group"><div class="section-group-title">🌱 ทีม แผนงาน การประชุม และการเงิน (3.1–3.5)</div><div id="sg-3a"></div></div>
+    <div class="section-group"><div class="section-group-title">📊 การบันทึก กิจกรรมสุขภาพ HL/FL และการพึ่งตนเอง (3.6–3.10)</div><div id="sg-3b"></div></div>
+  </div>
+  <div class="form-block">
+    <div class="form-block-title"><span style="background:var(--amber);color:#fff;padding:3px 9px;border-radius:4px;font-size:10px;font-weight:800;letter-spacing:.08em">ส่วนที่ 4</span>ประเมินผลลัพธ์ &amp; ความเสี่ยง</div>
+    <div style="font-size:12px;font-weight:600;margin-bottom:10px;color:var(--muted)">4.1–4.5 ประเมินผลลัพธ์ขั้นที่ (คะแนนเต็ม 100 แต่ละขั้น)</div>
+    <div class="frow"><div class="fgroup"><label>ผลลัพธ์ขั้นที่ 1</label><input type="number" id="out1" min="0" max="100" placeholder="0–100"></div><div class="fgroup"><label>ผลลัพธ์ขั้นที่ 2</label><input type="number" id="out2" min="0" max="100" placeholder="0–100"></div></div>
+    <div class="frow"><div class="fgroup"><label>ผลลัพธ์ขั้นที่ 3</label><input type="number" id="out3" min="0" max="100" placeholder="0–100"></div><div class="fgroup"><label>ผลลัพธ์ขั้นที่ 4</label><input type="number" id="out4" min="0" max="100" placeholder="0–100"></div></div>
+    <div class="frow" style="margin-bottom:16px"><div class="fgroup"><label>ผลลัพธ์ขั้นที่ 5 (เฉพาะศูนย์เรียนรู้)</label><input type="number" id="out5" min="0" max="100" placeholder="0–100 (ถ้ามี)"></div><div></div></div>
+    <div style="font-size:12px;font-weight:700;margin-bottom:8px">ตารางความเสี่ยง (Risk Matrix) <span style="font-weight:400;color:var(--muted)">— เลือกระดับ + พิมพ์แผนแก้ไข</span></div>
+    <div id="risk-form"></div>
+  </div>
+  <div class="form-block">
+    <div class="form-block-title"><span style="background:var(--ink2);color:#fff;padding:3px 9px;border-radius:4px;font-size:10px;font-weight:800;letter-spacing:.08em">ส่วนที่ 5</span>การทบทวนตนเองและแผนพัฒนาของพี่เลี้ยง</div>
+    <div class="frow full"><div class="fgroup"><label>เดือนนี้สิ่งที่ทำได้ดีคืออะไร</label><textarea id="r-good" placeholder="เล่าสิ่งที่ภูมิใจหรือทำได้ดีในเดือนนี้..."></textarea></div></div>
+    <div class="frow full"><div class="fgroup"><label>ความท้าทายหรือจุดติดขัดคืออะไร</label><textarea id="r-challenge" placeholder="เล่าปัญหาหรืออุปสรรคที่พบ..."></textarea></div></div>
+    <div class="frow full"><div class="fgroup"><label>ชุมชนกำลังเรียนรู้อะไรจากการทำงานร่วมกัน</label><textarea id="r-learn" placeholder="สังเกตการเปลี่ยนแปลงของชุมชน..."></textarea></div></div>
+    <div class="frow"><div class="fgroup"><label>เดือนหน้าจะปรับอะไร</label><textarea id="r-next" placeholder="แผนปรับการทำงานเดือนหน้า..."></textarea></div><div class="fgroup"><label>สิ่งที่อยากพัฒนา / ต้องการ Coaching เรื่องใด</label><textarea id="r-need" placeholder="ต้องการความช่วยเหลือด้านใด..."></textarea></div></div>
+    <div class="submit-error" id="submit-error">❌ <span id="error-msg">เกิดข้อผิดพลาด กรุณาลองใหม่</span></div>
+    <button class="btn-submit" id="submit-btn" onclick="doSubmit()">💾 บันทึกข้อมูลทั้งหมด → Google Sheets</button>
+    <div class="submit-loading" id="submit-loading"><span class="spinner"></span> กำลังส่งข้อมูล...</div>
+    <div class="btn-note">ข้อมูลจะถูกส่งผ่าน Google Apps Script → บันทึกใน Google Sheets โดยอัตโนมัติ</div>
+  </div>
+</div>
+
+<!-- HISTORY -->
+<div class="page" id="pg-hist">
+  <div class="g2">
+    <div><div class="card" style="margin-bottom:14px"><div class="card-title">🕐 รายการกรอกล่าสุด</div><div class="tl" id="tl-list"></div></div></div>
+    <div>
+      <div class="card" style="margin-bottom:14px"><div class="card-title">👤 สถิติแยกพี่เลี้ยง</div><table class="dt" id="mentor-dt"></table></div>
+      <div class="card"><div class="card-title">📝 บันทึกสะท้อน ส่วนที่ 5 (ล่าสุด)</div><div id="reflect-notes"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIG -->
+<div class="page" id="pg-cfg">
+  <div class="card" style="max-width:720px;margin:0 auto">
+    <div class="card-title">⚙️ ตั้งค่าระบบ</div>
+    <div style="margin-bottom:20px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:6px">🔗 Google Apps Script URL</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:6px;line-height:1.6">วาง URL ที่ได้จากการ Deploy Web App ที่นี่<br>รูปแบบ: <code style="background:var(--surface2);padding:1px 5px;border-radius:3px;font-size:11px">https://script.google.com/macros/s/xxxxx/exec</code></div>
+      <input type="text" class="config-input" id="cfg-url" placeholder="https://script.google.com/macros/s/YOUR_ID/exec" oninput="saveConfig()">
+      <div id="url-status" style="font-size:11px;margin-top:6px;color:var(--muted)"></div>
+    </div>
+    <div style="border-top:1px solid var(--line);padding-top:16px;margin-bottom:16px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px">📋 ขั้นตอนการตั้งค่า (ทำครั้งเดียว)</div>
+      <div style="font-size:12px;line-height:2;color:var(--ink2)">
+        <div><strong>ขั้น 1</strong> — สร้าง Google Sheet ใหม่ → เปลี่ยนชื่อ Sheet 1 เป็น <code style="background:var(--surface2);padding:1px 5px;border-radius:3px">submissions</code></div>
+        <div><strong>ขั้น 2</strong> — ไม่ต้องใส่ header เอง (Apps Script จะสร้างให้อัตโนมัติ ถ้าเพิ่มโค้ด createHeader)</div>
+        <div><strong>ขั้น 3</strong> — ใน Google Sheet → <strong>Extensions → Apps Script</strong> → วางโค้ดด้านล่าง</div>
+        <div><strong>ขั้น 4</strong> — <strong>Deploy → New Deployment → Web App</strong><br>&nbsp;&nbsp;Execute as: <strong>Me</strong> | Who has access: <strong>Anyone</strong> → Copy URL</div>
+        <div><strong>ขั้น 5</strong> — วาง URL ในช่องด้านบน → บันทึกไฟล์ HTML → แจกให้พี่เลี้ยง</div>
+      </div>
+    </div>
+    <div style="border-top:1px solid var(--line);padding-top:16px;margin-bottom:16px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px">📄 โค้ด Google Apps Script <span style="font-size:11px;font-weight:400;color:var(--muted)">(คัดลอกไปวางทั้งหมด)</span></div>
+      <div style="position:relative">
+        <button onclick="copyScript()" style="position:absolute;top:8px;right:8px;background:var(--green);color:#fff;border:none;border-radius:5px;padding:5px 12px;font-size:11px;cursor:pointer;font-family:Sarabun,sans-serif;font-weight:600">📋 คัดลอก</button>
+        <pre id="script-code" style="background:var(--ink);color:#a8d8a8;border-radius:8px;padding:16px;font-size:10px;line-height:1.7;overflow-x:auto;white-space:pre;font-family:'IBM Plex Mono',monospace;max-height:420px;overflow-y:auto;margin-top:0"></pre>
+      </div>
+    </div>
+    <div style="border-top:1px solid var(--line);padding-top:16px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px">🧪 ทดสอบการเชื่อมต่อ</div>
+      <button onclick="testConnection()" style="background:var(--blue);color:#fff;border:none;border-radius:7px;padding:9px 18px;font-family:Sarabun,sans-serif;font-size:13px;font-weight:600;cursor:pointer">ทดสอบ Ping</button>
+      <div id="test-result" style="margin-top:8px;font-size:12px"></div>
+    </div>
+  </div>
+</div>
+
+</main>
+<div class="toast ok" id="toast"><span>✅</span><span id="toast-msg"></span></div>
+
+<script>
+const PROJECTS = [
+  [1,"ชุมชน ก.ส.บ.พัฒนา"],
+  [2,"ชุมชน อัมรินทร์ 3 ผัง 4"],
+  [3,"ชุมชน สหกรณ์เคหสถานบ้านมั่นคงกัลยาณมิตร"],
+  [4,"ชุมชนเฟื่องฟ้าพัฒนา"],
+  [5,"ชุมชนธรรมสาธิตวิลล่า"],
+  [6,"ชุมชน สหกรณ์ปทุมธานีโมเดล จำกัด"],
+  [7,"ชุมชนบูรพา 7"],
+  [8,"ชุมชนคลองหลวงเพิ่มพูน"],
+  [9,"ชุมชนสหกรณ์เคหสถานฟ้าใหม่ร่วมใจ"],
+  [10,"ชุมชน สามัคคีธรรมคลองสาม"],
+  [11,"ชุมชนเคหสถานเมืองบางพูน"],
+  [12,"ชุมชนสหกรณ์เคหสถานเก้ามงคลพัฒนา จำกัด"],
+  [13,"กลุ่มวินจักรยานยนต์รับจ้างนันทนา"],
+  [14,"ชุมชนสหกรณ์เคหสถานบ้านเกาะแก้ว จำกัด"],
+  [15,"ชุมชนสหกรณ์เคหสถานบ้านมั่นคงบางด้วน"],
+  [16,"ชุมชนเคสถานในคลองบางปลากด"],
+  [17,"ชุมชน สหกรณ์เคหสถานชุมชนสร้างตนเอง จำกัด"],
+  [18,"ชุมชนคุ้มทอง"],
+  [19,"ชุมชนบึงพระราม 9"],
+  [20,"ชุมชนทรัพย์สินใหม่"],
+  [21,"ชุมชนเคหะคลอง 9"],
+  [22,"ชุมชนสหกรณ์เคหสถานสามัคคีติวานนท์"],
+  [23,"ชุมชนมิตรประชา"],
+  [24,"ชุมชนบ้านมั่นคงสร้างสรรค์ นครรังสิต"],
+  [25,"ชุมชนคลองปักหลัก"],
+  [26,"ชุมชนร่มประดู่"],
+  [27,"ชุมชนบ้านมั่นคงเจริญพัฒนา"],
+  [28,"ชุมชนยิ้มประยูร"],
+  [29,"ชุมชนบ้านมั่นคงฟาอีส บ้านใหม่"],
+  [30,"ชุมชนหงสกุล"],
+  [31,"ศูนย์พัฒนาเด็กก่อนวัยเรียนชุมชนวัดสวัสดิ์วารีสีมาราม"],
+  [32,"ศูนย์พัฒนาเด็กเล็กชุมชนท่าน้ำน้ำสามเสน"],
+  [33,"ศูนย์เด็กเล็กชุมชนวัดดาวดึงษาราม"],
+  [34,"ศูนย์เด็กเล็กบางปลา"],
+  [35,"ศูนย์เด็กเล็กอัลเอี๊ยะติซอม"]
+];
+const M_S2 = {1:[4, 2, 2, 4, 3, 2, 2, 2, 4, 2, 4, 4, 4, 2, 4, 3, 2, 2],2:[5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],3:[1, 3, 2, 2, 2, 1, 1, 2, 1, 1, 2, 1, 2, 2, 3, 2, 1, 3],4:[5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],5:[3, 3, 3, 4, 4, 4, 5, 4, 3, 4, 4, 3, 5, 4, 5, 5, 5, 3],6:[5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],7:[2, 3, 3, 3, 2, 2, 4, 4, 3, 2, 4, 3, 3, 4, 3, 2, 3, 2],8:[3, 5, 5, 5, 4, 5, 5, 4, 5, 4, 4, 3, 3, 5, 4, 3, 3, 3],9:[2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],10:[4, 4, 3, 4, 3, 2, 3, 3, 2, 3, 2, 4, 4, 3, 4, 2, 4, 2],11:[5, 4, 5, 5, 5, 3, 3, 4, 3, 5, 5, 3, 5, 4, 4, 3, 3, 4],12:[2, 1, 1, 1, 3, 1, 1, 3, 2, 1, 3, 1, 1, 3, 2, 3, 1, 2],13:[4, 4, 3, 2, 4, 4, 4, 2, 4, 3, 3, 4, 4, 3, 3, 4, 3, 2],14:[3, 3, 3, 4, 3, 5, 5, 3, 5, 3, 3, 3, 5, 5, 3, 3, 3, 3],15:[2, 1, 3, 1, 2, 3, 2, 1, 3, 1, 3, 3, 3, 2, 1, 2, 2, 1],16:[2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],17:[3, 3, 3, 3, 5, 4, 3, 4, 3, 4, 4, 3, 3, 4, 5, 3, 3, 5],18:[3, 1, 1, 1, 1, 2, 2, 2, 1, 2, 1, 1, 2, 1, 2, 2, 2, 2],19:[3, 4, 4, 4, 4, 4, 3, 2, 2, 3, 2, 2, 4, 4, 4, 2, 4, 3],20:[3, 3, 5, 4, 5, 5, 3, 3, 5, 3, 3, 3, 5, 3, 5, 3, 4, 3],21:[3, 1, 3, 3, 1, 3, 1, 2, 3, 3, 3, 3, 2, 2, 1, 3, 3, 2],22:[2, 3, 3, 2, 4, 4, 3, 3, 3, 2, 2, 3, 4, 4, 2, 2, 4, 2],23:[5, 4, 3, 4, 3, 3, 4, 4, 3, 4, 5, 5, 4, 5, 5, 5, 3, 5],24:[3, 2, 3, 1, 1, 2, 1, 1, 3, 3, 1, 2, 2, 3, 1, 3, 2, 1],25:[4, 4, 3, 4, 3, 3, 2, 2, 4, 3, 3, 2, 2, 3, 2, 4, 3, 2],26:[5, 4, 5, 5, 4, 5, 3, 3, 3, 5, 3, 5, 3, 4, 5, 5, 3, 4],27:[2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],28:[2, 2, 3, 2, 2, 4, 3, 3, 4, 4, 2, 3, 2, 4, 2, 3, 2, 3],29:[3, 3, 4, 4, 4, 3, 3, 3, 5, 3, 4, 4, 4, 3, 4, 4, 5, 5],30:[2, 3, 3, 2, 1, 1, 2, 1, 3, 2, 1, 1, 3, 2, 2, 3, 2, 2],31:[4, 4, 2, 3, 4, 2, 3, 2, 4, 3, 2, 4, 4, 4, 4, 4, 4, 4],32:[3, 4, 4, 3, 5, 4, 5, 4, 5, 3, 5, 4, 5, 4, 5, 4, 4, 4],33:[3, 2, 3, 1, 1, 2, 3, 2, 3, 3, 1, 3, 3, 2, 2, 3, 1, 2],34:[3, 2, 3, 4, 4, 4, 3, 3, 3, 3, 4, 2, 4, 3, 4, 2, 4, 2],35:[4, 5, 5, 5, 5, 4, 3, 3, 5, 4, 3, 3, 3, 3, 3, 3, 4, 5]};
+const M_S3 = {1:[2, 3, 3, 4, 4, 2, 4, 4, 3, 3],2:[5, 5, 5, 5, 5, 5, 5, 5, 5, 5],3:[3, 3, 2, 1, 3, 1, 1, 2, 1, 2],4:[5, 5, 5, 5, 5, 5, 5, 5, 5, 5],5:[5, 4, 3, 5, 4, 4, 4, 3, 5, 4],6:[5, 5, 5, 5, 5, 5, 5, 5, 5, 5],7:[3, 3, 3, 4, 2, 2, 2, 2, 3, 4],8:[3, 5, 3, 3, 4, 4, 4, 5, 4, 4],9:[2, 2, 2, 2, 2, 2, 2, 2, 2, 2],10:[2, 3, 3, 3, 3, 4, 4, 4, 4, 4],11:[3, 4, 3, 4, 4, 4, 3, 4, 4, 5],12:[3, 2, 3, 1, 2, 1, 3, 3, 1, 2],13:[4, 4, 4, 2, 2, 4, 3, 2, 3, 2],14:[3, 4, 4, 4, 3, 4, 4, 4, 4, 4],15:[2, 2, 1, 2, 1, 3, 3, 1, 2, 1],16:[2, 2, 2, 2, 2, 2, 2, 2, 2, 2],17:[3, 3, 4, 5, 3, 5, 3, 4, 5, 4],18:[2, 1, 3, 3, 3, 3, 1, 1, 2, 1],19:[4, 2, 3, 4, 4, 3, 3, 4, 2, 2],20:[5, 5, 5, 3, 3, 5, 4, 5, 5, 3],21:[3, 1, 2, 3, 2, 3, 2, 1, 3, 3],22:[3, 2, 3, 3, 2, 3, 3, 4, 3, 4],23:[3, 4, 3, 5, 5, 5, 4, 5, 5, 4],24:[2, 2, 3, 3, 2, 2, 1, 1, 2, 2],25:[2, 3, 4, 4, 4, 3, 3, 2, 3, 3],26:[3, 4, 3, 4, 4, 4, 4, 5, 5, 4],27:[2, 2, 2, 2, 2, 2, 2, 2, 2, 2],28:[2, 4, 3, 4, 4, 3, 3, 2, 2, 3],29:[3, 4, 5, 3, 4, 5, 5, 4, 4, 5],30:[3, 2, 2, 3, 3, 2, 2, 3, 2, 2],31:[3, 3, 2, 2, 4, 2, 3, 2, 4, 4],32:[5, 3, 3, 3, 5, 4, 4, 5, 5, 5],33:[3, 2, 1, 1, 2, 1, 2, 1, 2, 1],34:[4, 4, 2, 3, 2, 2, 4, 3, 4, 2],35:[5, 4, 3, 3, 5, 4, 4, 4, 4, 4]};
+const M_RISK = {1:["g", "g", "g", "a", "g", "g", "a"],2:["g", "g", "g", "g", "g", "g", "g"],3:["g", "a", "g", "g", "g", "g", "a"],4:["g", "g", "g", "g", "g", "g", "g"],5:["a", "a", "g", "a", "a", "g", "a"],6:["g", "g", "g", "g", "g", "g", "g"],7:["g", "g", "r", "g", "g", "g", "g"],8:["a", "g", "g", "g", "a", "a", "r"],9:["r", "r", "r", "r", "r", "r", "r"],10:["g", "r", "a", "g", "r", "g", "g"],11:["r", "a", "r", "g", "a", "g", "a"],12:["g", "r", "g", "g", "g", "g", "g"],13:["g", "g", "a", "r", "a", "g", "a"],14:["g", "a", "r", "g", "r", "a", "g"],15:["a", "a", "a", "a", "g", "a", "g"],16:["r", "r", "r", "r", "r", "r", "r"],17:["g", "r", "a", "a", "g", "r", "g"],18:["a", "g", "g", "a", "a", "r", "a"],19:["g", "g", "a", "a", "r", "a", "g"],20:["a", "g", "a", "g", "g", "r", "g"],21:["g", "g", "a", "r", "a", "g", "r"],22:["a", "a", "g", "a", "g", "g", "g"],23:["g", "g", "a", "a", "g", "r", "a"],24:["a", "a", "g", "g", "a", "g", "a"],25:["a", "r", "a", "g", "g", "g", "a"],26:["g", "g", "a", "r", "a", "g", "g"],27:["r", "r", "r", "r", "r", "r", "r"],28:["g", "a", "a", "g", "g", "g", "a"],29:["g", "r", "g", "a", "r", "g", "a"],30:["r", "g", "a", "a", "a", "g", "a"],31:["a", "g", "a", "g", "a", "a", "r"],32:["g", "g", "g", "a", "g", "a", "g"],33:["g", "g", "r", "g", "a", "a", "r"],34:["a", "g", "a", "a", "a", "g", "g"],35:["a", "a", "a", "a", "g", "g", "r"]};
+
+const S2 = [
+  {id:'2.1',g:'a',label:'พี่เลี้ยงมีความเข้าใจเป้าหมาย วัตถุประสงค์ งบประมาณ และตัวชี้วัดของโครงการ',desc:'1=ยังไม่เข้าใจ · 2=บางส่วน · 3=พื้นฐาน · 4=เชื่อมภาคสนาม · 5=เชิงระบบ'},
+  {id:'2.2',g:'a',label:'มีแผนปฏิบัติงาน ติดตามผล และหนุนเสริมโครงการย่อยที่ชัดเจน',desc:'1=ยังไม่มีแผน · 2=คร่าวๆ · 3=วางแผนบางส่วน · 4=เป็นระบบ · 5=ปรับแผนตามสถานการณ์'},
+  {id:'2.3',g:'a',label:'ถ่ายทอดความรู้ด้านบริหารโครงการและการเงิน–บัญชีได้',desc:'1=ยังไม่มั่นใจ · 2=ไม่เป็นระบบ · 3=พื้นฐาน · 4=ฝึกปฏิบัติได้ · 5=ชุมชนนำไปใช้ได้จริง'},
+  {id:'2.4',g:'b',label:'พัฒนาช่องทางสื่อสารและประสานงานกับคณะทำงาน',desc:'1=มีข้อจำกัดมาก · 2=บางส่วน · 3=พื้นฐาน · 4=ต่อเนื่อง · 5=สร้างระบบสื่อสาร'},
+  {id:'2.5',g:'b',label:'จัดเวทีคลี่โครงการ',desc:'1=ยังไม่มั่นใจ · 2=บอกข้อมูล · 3=ชวนคุย · 4=สร้างส่วนร่วม · 5=ชุมชนเป็นเจ้าของ'},
+  {id:'2.6',g:'b',label:'คืนข้อมูล Baseline และสะท้อนข้อมูลสำคัญให้ชุมชน',desc:'1=ยังไม่มั่นใจ · 2=รายงาน · 3=อธิบายพื้นฐาน · 4=ชุมชนเข้าใจ · 5=ตัดสินใจร่วมกันได้'},
+  {id:'2.7',g:'c',label:'จัดเวที ARE ครั้งที่ 1',desc:'1=ยังไม่มั่นใจ · 2=นำคำตอบ · 3=สะท้อนบางส่วน · 4=ช่วยวิเคราะห์ · 5=เรียนรู้ของทีม'},
+  {id:'2.7.1',g:'c',label:'ติดตามผลหลัง ARE ครั้งที่ 1',desc:'1=ไม่ต่อเนื่อง · 2=เฉพาะมีปัญหา · 3=บางส่วน · 4=ตามแผน · 5=ช่วยปรับงานได้'},
+  {id:'2.8',g:'c',label:'จัดเวที ARE ครั้งที่ 2',desc:'1=ยังไม่มั่นใจ · 2=นำคำตอบ · 3=สะท้อนบางส่วน · 4=ช่วยวิเคราะห์ · 5=เรียนรู้ของทีม'},
+  {id:'2.8.1',g:'c',label:'ติดตามผลหลัง ARE ครั้งที่ 2',desc:'1=ไม่ต่อเนื่อง · 2=เฉพาะมีปัญหา · 3=บางส่วน · 4=ตามแผน · 5=ช่วยปรับงานได้'},
+  {id:'2.9',g:'c',label:'จัดเวที ARE ครั้งที่ 3',desc:'1=ยังไม่มั่นใจ · 2=นำคำตอบ · 3=สะท้อนบางส่วน · 4=ช่วยวิเคราะห์ · 5=เรียนรู้ของทีม'},
+  {id:'2.9.1',g:'c',label:'ติดตามผลหลัง ARE ครั้งที่ 3',desc:'1=ไม่ต่อเนื่อง · 2=เฉพาะมีปัญหา · 3=บางส่วน · 4=ตามแผน · 5=ช่วยปรับงานได้'},
+  {id:'2.10',g:'c',label:'จัดเวที ARE ครั้งที่ 4',desc:'1=ยังไม่มั่นใจ · 2=นำคำตอบ · 3=สะท้อนบางส่วน · 4=ช่วยวิเคราะห์ · 5=เรียนรู้ของทีม'},
+  {id:'2.10.1',g:'c',label:'ติดตามผลหลัง ARE ครั้งที่ 4',desc:'1=ไม่ต่อเนื่อง · 2=เฉพาะมีปัญหา · 3=บางส่วน · 4=ตามแผน · 5=ช่วยปรับงานได้'},
+  {id:'2.11',g:'d',label:'ถอดบทเรียน เก็บเกี่ยวผลลัพธ์โครงการย่อย',desc:'1=ยังไม่มั่นใจ · 2=เล่ากิจกรรม · 3=บทเรียนพื้นฐาน · 4=วิเคราะห์ปัจจัย · 5=สกัดองค์ความรู้'},
+  {id:'2.12',g:'d',label:'ถ่ายทอด & หนุนเสริม HL Coaching',desc:'1=ยังไม่มั่นใจ · 2=บางส่วน · 3=พื้นฐาน · 4=ออกแบบกิจกรรม · 5=โค้ช HL ได้'},
+  {id:'2.13',g:'d',label:'ถ่ายทอด & หนุนเสริม FL Coaching',desc:'1=ยังไม่มั่นใจ · 2=บางส่วน · 3=พื้นฐาน · 4=ใช้ข้อมูลการเงิน · 5=เชื่อม FL เศรษฐกิจฐานราก'},
+  {id:'2.14',g:'d',label:'ติดตามการเงิน ตรวจความถูกต้อง กรอก Excel',desc:'1=ยังไม่มั่นใจ · 2=ผิดพลาดบ่อย · 3=พื้นฐาน · 4=ถูกต้องทันเวลา · 5=วิเคราะห์ความเสี่ยงได้'},
+];
+const S3 = [
+  {id:'3.1',g:'a',label:'คณะทำงานเข้าใจเป้าหมาย แผน และตัวชี้วัดของโครงการ',desc:'1=ยังไม่เข้าใจ · 2=บางส่วน · 3=พื้นฐาน · 4=เชื่อมเป้าหมาย · 5=กำกับงานเองได้'},
+  {id:'3.2',g:'a',label:'แบ่งบทบาทหน้าที่ชัดเจน และมีการติดตาม',desc:'1=ยังไม่แบ่ง · 2=ไม่ชัด · 3=พอสมควร · 4=แบ่งงานชัด · 5=ปรับบทบาทเอง'},
+  {id:'3.3',g:'a',label:'มีแผนการทำงาน 3, 6, 9, 12 เดือน และติดตามต่อเนื่อง',desc:'1=ไม่มีแผน · 2=คร่าวๆ · 3=เริ่มติดตาม · 4=ใช้กำกับงาน · 5=ปรับแผนเองได้'},
+  {id:'3.4',g:'a',label:'ประชุมทีมต่อเนื่อง วางแผนและติดตามผลรายเดือน',desc:'1=ไม่ประชุม · 2=ไม่สม่ำเสมอ · 3=ค่อนข้างต่อเนื่อง · 4=สม่ำเสมอ · 5=วัฒนธรรมเรียนรู้'},
+  {id:'3.5',g:'a',label:'บริหารงบประมาณได้ดี เอกสารการเงินถูกต้อง',desc:'1=เอกสารไม่ครบ · 2=ผิดพลาดมาก · 3=พื้นฐาน · 4=ถูกต้อง · 5=ตรวจสอบกันเองได้'},
+  {id:'3.6',g:'b',label:'จดบันทึกข้อมูลกิจกรรมของโครงการต่อเนื่อง',desc:'1=ไม่มีข้อมูล · 2=เริ่มแต่ไม่ต่อเนื่อง · 3=บางส่วน · 4=ใช้ปรับงาน · 5=ตัดสินใจด้วยข้อมูล'},
+  {id:'3.7',g:'b',label:'จดบันทึกข้อมูลผลผลิต การกระจาย และการลดค่าใช้จ่าย',desc:'1=ไม่มีข้อมูล · 2=เริ่มแต่ไม่ต่อเนื่อง · 3=บางส่วน · 4=ใช้ปรับงาน · 5=วิเคราะห์เองได้'},
+  {id:'3.8',g:'b',label:'ออกแบบและสร้างกิจกรรมสุขภาพให้กลุ่มเป้าหมายได้',desc:'1=ยังไม่เกิด · 2=ไม่ต่อเนื่อง · 3=มีกิจกรรม · 4=ชุมชนออกแบบ · 5=ขยายผลได้'},
+  {id:'3.9',g:'b',label:'ออกแบบกิจกรรม HL + FL ให้กลุ่มเป้าหมายได้',desc:'1=ยังไม่เกิด · 2=พึ่งคนนอก · 3=บางส่วน · 4=ออกแบบเอง · 5=ขยายผลได้'},
+  {id:'3.10',g:'b',label:'ระดับการพึ่งตนเองของคณะทำงาน',desc:'1=พึ่งพาพี่เลี้ยงเกือบทั้งหมด · 2=เริ่มทำเองบางเรื่อง · 3=ต้องหนุนเสริม · 4=ค่อนข้างมาก · 5=ขับเคลื่อนเองได้'},
+];
+const RISK_ITEMS = ['ไม่มีแผนการทำงาน','ไม่มีประชุม ไม่บริหารจัดการ','ข้อมูลไม่อัปเดต','งบประมาณมีความเสี่ยง','ปลูกผักไม่ได้','กิจกรรมไม่ต่อเนื่อง ไม่ทำตามแผนงาน','พี่เลี้ยงไม่ติดตาม'];
+const SCORE_LABELS = {1:'ต้องเร่งแก้',2:'ต้องปรับ',3:'พอใช้',4:'ดี',5:'ดีมาก'};
+const formScores = {};
+const riskChoices = {};
+const STORAGE_KEY = 'planting_script_url';
+
+function avg(a){return a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length*10)/10:0;}
+function hmC(v){if(!v&&v!==0)return'hm-0';if(v>=5)return'hm-5';if(v>=4)return'hm-4';if(v>=3)return'hm-3';if(v>=2)return'hm-2';return'hm-1';}
+function sC(v){if(v>=4.5)return's5';if(v>=3.5)return's4';if(v>=2.5)return's3';if(v>=1.5)return's2';return's1';}
+function pCol(v){return v>=80?'var(--green-m)':v>=50?'var(--amber-m)':'var(--red-m)';}
+function rCls(r){return r==='g'?'risk-g':r==='a'?'risk-a':'risk-r';}
+function rLbl(r){return r==='g'?'🟢':r==='a'?'🟡':'🔴';}
+function getProjName(id){const p=PROJECTS.find(x=>x[0]===parseInt(id));return p?p[1]:id;}
+function pad(n){return String(n).padStart(2,'0');}
+function shortName(s){return s.replace('ชุมชน ','').replace('ชุมชน','').replace('สหกรณ์เคหสถาน','สกส.').substring(0,20);}
+
+function getScriptURL(){return localStorage.getItem(STORAGE_KEY)||'';}
+function saveConfig(){
+  const url=document.getElementById('cfg-url').value.trim();
+  localStorage.setItem(STORAGE_KEY,url);
+  const st=document.getElementById('url-status');
+  if(url.includes('script.google.com')){
+    st.innerHTML='✅ <span style="color:var(--green)">URL ดูถูกต้อง · บันทึกแล้ว</span>';
+    document.getElementById('no-url-banner').style.display='none';
+  } else if(url){
+    st.innerHTML='⚠️ <span style="color:var(--amber)">URL รูปแบบอาจไม่ถูกต้อง</span>';
+  } else {
+    st.textContent='';
+    document.getElementById('no-url-banner').style.display='flex';
+  }
+}
+function loadConfig(){
+  const url=getScriptURL();
+  const el=document.getElementById('cfg-url');
+  if(el)el.value=url;
+  if(url){
+    document.getElementById('no-url-banner').style.display='none';
+    const st=document.getElementById('url-status');
+    if(st)st.innerHTML='✅ <span style="color:var(--green)">URL บันทึกไว้แล้ว</span>';
+  }
+}
+async function testConnection(){
+  const url=getScriptURL();
+  const res=document.getElementById('test-result');
+  if(!url){res.innerHTML='<span style="color:var(--red)">❌ ยังไม่ได้ใส่ URL</span>';return;}
+  res.innerHTML='<span style="color:var(--muted)">⏳ กำลังทดสอบ...</span>';
+  try{
+    await fetch(url+'?ping=1',{method:'GET',mode:'no-cors'});
+    res.innerHTML='<span style="color:var(--green)">✅ เชื่อมต่อสำเร็จ — พร้อมใช้งาน</span>';
+  }catch(e){
+    res.innerHTML='<span style="color:var(--red)">❌ เชื่อมต่อไม่ได้: '+e.message+'</span>';
+  }
+}
+
+function buildDashMetrics(){
+  const total=PROJECTS.length;
+  const submitted=PROJECTS.filter(([id])=>M_S2[id]).length;
+  const missing=total-submitted;
+  const allS2=PROJECTS.filter(([id])=>M_S2[id]).map(([id])=>avg(M_S2[id]));
+  const allS3=PROJECTS.filter(([id])=>M_S3[id]).map(([id])=>avg(M_S3[id]));
+  const s2avg=avg(allS2); const s3avg=avg(allS3);
+  const highRisk=PROJECTS.filter(([id])=>M_RISK[id]&&M_RISK[id].filter(r=>r==='r').length>=2).length;
+  document.getElementById('dash-submitted').innerHTML=submitted+'<span style="font-size:13px;color:var(--muted)">/'+total+'</span>';
+  document.getElementById('dash-missing').textContent=missing;
+  document.getElementById('dash-risk').textContent=highRisk;
+  document.getElementById('dash-s2avg').textContent=s2avg;
+  document.getElementById('dash-s3avg').textContent=s3avg;
+  document.getElementById('dash-prog-bar').style.width=Math.round(submitted/total*100)+'%';
+}
+
+function buildAlerts(){
+  const c=document.getElementById('alert-list');
+  const hr=PROJECTS.filter(([id])=>M_RISK[id]&&M_RISK[id].filter(r=>r==='r').length>=2).map(([id])=>'P'+pad(id)).join(', ');
+  const ls=PROJECTS.filter(([id])=>M_S2[id]&&avg(M_S2[id])<=2.5).length;
+  const gp=PROJECTS.filter(([id])=>M_S2[id]&&avg(M_S2[id])>=4.5&&M_S3[id]&&avg(M_S3[id])>=4.5).map(([id])=>'P'+pad(id)).join(', ');
+  c.innerHTML=(hr?'<div class="alert-box alert-red"><div class="alert-icon">🔴</div><div class="alert-body"><strong>โครงการความเสี่ยงสูง (🔴 ≥2 รายการ)</strong><span>'+hr+'</span></div></div>':'')
+    +(ls?'<div class="alert-box alert-amber"><div class="alert-icon">🟡</div><div class="alert-body"><strong>'+ls+' โครงการ — คะแนน ส่วน2 ≤ 2.5 ต้องการ Coaching</strong></div></div>':'')
+    +'<div class="alert-box alert-amber"><div class="alert-icon">⏰</div><div class="alert-body"><strong>ARE ครั้งที่ 3–4 ยังไม่ได้จัดในหลายโครงการ</strong><span>ควรเร่งดำเนินการก่อนสิ้นไตรมาส</span></div></div>'
+    +(gp?'<div class="alert-box alert-green"><div class="alert-icon">🟢</div><div class="alert-body"><strong>โครงการคะแนนดีเยี่ยม ≥ 4.5 ทุกส่วน</strong><span>'+gp+'</span></div></div>':'');
+}
+
+function buildHM(tid,items,mockData){
+  const t=document.getElementById(tid);if(!t)return;
+  const grps=tid==='hm2'
+    ?[{l:'ความเข้าใจ & แผน',s:3},{l:'สื่อสาร & เวที',s:3},{l:'ARE (4 รอบ)',s:8},{l:'ถอดบทเรียน HL FL',s:4}]
+    :[{l:'ทีม แผนงาน การเงิน',s:5},{l:'บันทึก กิจกรรม พึ่งตนเอง',s:5}];
+  let h='<thead><tr><th class="row-head" rowspan="2">โครงการ</th>';
+  grps.forEach(g=>h+='<th class="group-head" colspan="'+g.s+'">'+g.l+'</th>');
+  h+='<th class="group-head">avg</th></tr><tr>';
+  items.forEach(it=>h+='<th title="'+it.label+'">'+it.id+'</th>');
+  h+='<th></th></tr></thead><tbody>';
+  PROJECTS.forEach(([id,name])=>{
+    const sc=mockData[id];
+    if(!sc){h+='<tr><td class="row-head"><span style="font-family:monospace;font-size:10px;background:var(--surface2);padding:1px 4px;border-radius:3px;margin-right:4px">P'+pad(id)+'</span>'+shortName(name)+'</td>'+items.map(()=>'<td><span class="hm-cell hm-0">–</span></td>').join('')+'<td>–</td></tr>';return;}
+    const av=avg(sc);
+    h+='<tr><td class="row-head"><span style="font-family:monospace;font-size:10px;background:var(--surface2);padding:1px 4px;border-radius:3px;margin-right:4px">P'+pad(id)+'</span>'+shortName(name)+'</td>';
+    sc.forEach(s=>h+='<td><span class="hm-cell '+hmC(s)+'">'+s+'</span></td>');
+    h+='<td><span class="score-pill '+sC(av)+'">'+av+'</span></td></tr>';
+  });
+  h+='</tbody>';t.innerHTML=h;
+}
+
+function buildProgress(){
+  const c=document.getElementById('prog-c');if(!c)return;
+  PROJECTS.map(([id,name])=>{
+    const all=[...(M_S2[id]||[]),...(M_S3[id]||[])];
+    const av=avg(all);const pct=Math.round((av-1)/4*100);
+    return{id,name,av,pct};
+  }).sort((a,b)=>b.av-a.av).forEach(({id,name,av,pct})=>{
+    c.innerHTML+='<div class="prog-row"><div class="prog-label"><strong style="font-size:11px">P'+pad(id)+' <span style="font-weight:400">'+shortName(name)+'</span></strong><span class="score-pill '+sC(av)+'">'+av+'/5</span></div><div class="prog-track"><div class="prog-fill" style="width:'+pct+'%;background:'+pCol(pct)+'"></div></div></div>';
+  });
+}
+
+function buildRiskTable(){
+  const t=document.getElementById('risk-tbl');if(!t)return;
+  const sample=PROJECTS.slice(0,10);
+  let h='<thead><tr><th>ความเสี่ยง</th>'+sample.map(([id])=>'<th>P'+pad(id)+'</th>').join('')+'</tr></thead><tbody>';
+  RISK_ITEMS.forEach((ri,i)=>{
+    h+='<tr><td style="font-size:11px;font-weight:500;white-space:nowrap">'+ri+'</td>';
+    sample.forEach(([id])=>{const r=(M_RISK[id]||[])[i]||'g';h+='<td><span class="'+rCls(r)+'" style="font-size:10px">'+rLbl(r)+'</span></td>';});
+    h+='</tr>';
+  });
+  h+='</tbody>';t.innerHTML=h;
+}
+
+function buildCharts(){
+  const s2av=S2.map((_,i)=>avg(PROJECTS.map(([id])=>(M_S2[id]||[])[i]).filter(v=>v)));
+  const s2c=s2av.map(v=>v>=4?'#4da876':v>=3?'#e09030':'#d94f42');
+  new Chart(document.getElementById('ch-s2'),{type:'bar',data:{labels:S2.map(x=>x.id),datasets:[{data:s2av,backgroundColor:s2c,borderRadius:3,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#7c7a72',font:{size:9}}},y:{beginAtZero:true,max:5,grid:{color:'rgba(224,219,208,.5)'},ticks:{color:'#7c7a72',font:{size:9}}}}}});
+  const s3av=S3.map((_,i)=>avg(PROJECTS.map(([id])=>(M_S3[id]||[])[i]).filter(v=>v)));
+  const s3c=s3av.map(v=>v>=4?'#4da876':v>=3?'#e09030':'#d94f42');
+  new Chart(document.getElementById('ch-s3'),{type:'bar',data:{labels:S3.map(x=>x.id),datasets:[{data:s3av,backgroundColor:s3c,borderRadius:3,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#7c7a72',font:{size:9}}},y:{beginAtZero:true,max:5,grid:{color:'rgba(224,219,208,.5)'},ticks:{color:'#7c7a72',font:{size:9}}}}}});
+  new Chart(document.getElementById('ch-trend'),{type:'line',data:{labels:['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.'],datasets:[{data:[12,18,22,28,31],borderColor:'#4da876',fill:true,backgroundColor:'rgba(77,168,118,.1)',tension:.4,pointRadius:5,pointBackgroundColor:'#2a6e47',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#7c7a72',font:{size:11}}},y:{beginAtZero:true,max:35,grid:{color:'rgba(224,219,208,.5)'},ticks:{color:'#7c7a72',font:{size:10}}}}}});
+}
+
+function buildItems(cid,items){
+  const c=document.getElementById(cid);if(!c)return;
+  items.forEach(it=>{
+    formScores[it.id]='';
+    const d=document.createElement('div');d.className='item-row';
+    d.innerHTML='<div class="item-num">'+it.id+'</div><div class="item-body"><div class="item-label">'+it.label+'</div><div class="item-desc">'+it.desc+'</div><div class="score-row">'+[1,2,3,4,5].map(n=>'<div class="score-opt" onclick="pickS(\''+it.id+'\','+n+',this)">'+n+'<span class="slabel">'+SCORE_LABELS[n]+'</span></div>').join('')+'</div></div>';
+    c.appendChild(d);
+  });
+}
+function pickS(id,n,el){
+  formScores[id]=n;
+  el.closest('.score-row').querySelectorAll('.score-opt').forEach(o=>o.className='score-opt');
+  el.className='score-opt sel-'+n;
+}
+function buildRiskForm(){
+  const c=document.getElementById('risk-form');if(!c)return;
+  RISK_ITEMS.forEach((ri,i)=>{
+    riskChoices[i]={level:'',plan:''};
+    c.innerHTML+='<div style="display:grid;grid-template-columns:1.2fr auto 1fr;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)"><div style="font-size:13px;font-weight:500">'+ri+'</div><div class="risk-opt-group"><div class="risk-opt r-green" onclick="pR('+i+',\'g\',this)">🟢 ไม่เสี่ยง</div><div class="risk-opt r-amber" onclick="pR('+i+',\'a\',this)">🟡 เริ่มเสี่ยง</div><div class="risk-opt r-red" onclick="pR('+i+',\'r\',this)">🔴 เสี่ยงสูง</div></div><input type="text" id="risk-plan-'+i+'" placeholder="แผนพัฒนา/แก้ไข (ถ้ามี)" style="padding:7px 10px;border:1.5px solid var(--line);border-radius:7px;font-family:Sarabun,sans-serif;font-size:12px;width:100%;outline:none;background:var(--surface2)" onchange="riskChoices['+i+'].plan=this.value"></div>';
+  });
+}
+function pR(i,l,el){
+  riskChoices[i].level=l;
+  el.closest('.risk-opt-group').querySelectorAll('.risk-opt').forEach(o=>o.classList.remove('sel'));
+  el.classList.add('sel');
+}
+function clearErr(id){document.getElementById(id)?.classList.remove('error');}
+function validate(){
+  let ok=true;
+  if(!document.getElementById('f-proj').value){document.getElementById('vg-proj').classList.add('error');ok=false;}
+  if(!document.getElementById('f-mentor').value){document.getElementById('vg-mentor').classList.add('error');ok=false;}
+  return ok;
+}
+async function doSubmit(){
+  if(!validate()){showToast('⚠️ กรุณากรอกข้อมูลส่วนที่ 1 ให้ครบก่อน');return;}
+  const projId=document.getElementById('f-proj').value;
+  const payload={
+    project_id:projId, project_name:getProjName(projId),
+    mentor:document.getElementById('f-mentor').value,
+    month:document.getElementById('f-month').value,
+    s2_1:formScores['2.1']||'', s2_2:formScores['2.2']||'', s2_3:formScores['2.3']||'',
+    s2_4:formScores['2.4']||'', s2_5:formScores['2.5']||'', s2_6:formScores['2.6']||'',
+    s2_7:formScores['2.7']||'', s2_7_1:formScores['2.7.1']||'',
+    s2_8:formScores['2.8']||'', s2_8_1:formScores['2.8.1']||'',
+    s2_9:formScores['2.9']||'', s2_9_1:formScores['2.9.1']||'',
+    s2_10:formScores['2.10']||'', s2_10_1:formScores['2.10.1']||'',
+    s2_11:formScores['2.11']||'', s2_12:formScores['2.12']||'',
+    s2_13:formScores['2.13']||'', s2_14:formScores['2.14']||'',
+    s3_1:formScores['3.1']||'', s3_2:formScores['3.2']||'', s3_3:formScores['3.3']||'',
+    s3_4:formScores['3.4']||'', s3_5:formScores['3.5']||'',
+    s3_6:formScores['3.6']||'', s3_7:formScores['3.7']||'', s3_8:formScores['3.8']||'',
+    s3_9:formScores['3.9']||'', s3_10:formScores['3.10']||'',
+    risk_1:riskChoices[0]?.level||'', risk_plan_1:riskChoices[0]?.plan||'',
+    risk_2:riskChoices[1]?.level||'', risk_plan_2:riskChoices[1]?.plan||'',
+    risk_3:riskChoices[2]?.level||'', risk_plan_3:riskChoices[2]?.plan||'',
+    risk_4:riskChoices[3]?.level||'', risk_plan_4:riskChoices[3]?.plan||'',
+    risk_5:riskChoices[4]?.level||'', risk_plan_5:riskChoices[4]?.plan||'',
+    risk_6:riskChoices[5]?.level||'', risk_plan_6:riskChoices[5]?.plan||'',
+    risk_7:riskChoices[6]?.level||'', risk_plan_7:riskChoices[6]?.plan||'',
+    out1:document.getElementById('out1')?.value||'',
+    out2:document.getElementById('out2')?.value||'',
+    out3:document.getElementById('out3')?.value||'',
+    out4:document.getElementById('out4')?.value||'',
+    out5:document.getElementById('out5')?.value||'',
+    reflect_good:document.getElementById('r-good')?.value||'',
+    reflect_challenge:document.getElementById('r-challenge')?.value||'',
+    reflect_learn:document.getElementById('r-learn')?.value||'',
+    reflect_next:document.getElementById('r-next')?.value||'',
+    reflect_need:document.getElementById('r-need')?.value||'',
+  };
+  const url=getScriptURL();
+  if(!url){showToast('⚠️ ยังไม่ได้ตั้งค่า Script URL — ไปที่แท็บ ⚙️ ตั้งค่า');return;}
+  const btn=document.getElementById('submit-btn');
+  const loading=document.getElementById('submit-loading');
+  const errBox=document.getElementById('submit-error');
+  btn.disabled=true;
+  btn.innerHTML='<span class="spinner"></span>กำลังส่งข้อมูล...';
+  loading.style.display='block';
+  errBox.style.display='none';
+  try{
+    // ใช้ Google Forms trick: ส่งผ่าน form submit แทน fetch เพื่อหลีกเลี่ยง CORS
+    // Content-Type: text/plain ไม่ trigger CORS preflight → ผ่านได้เลย
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: {'Content-Type': 'text/plain'},
+      body: JSON.stringify(payload)
+    });
+    const result = await resp.json();
+    if (result.status === 'ok') {
+      showToast('✅ บันทึกสำเร็จ! ข้อมูลถูกส่งไปยัง Google Sheets แล้ว');
+      resetForm();
+    } else {
+      throw new Error(result.message || 'Unknown error');
+    }
+  }catch(e){
+    errBox.style.display='block';
+    document.getElementById('error-msg').textContent='เกิดข้อผิดพลาด: '+e.message+' — ลองตรวจสอบ URL ในแท็บ ⚙️ ตั้งค่า';
+  }finally{
+    btn.disabled=false;
+    btn.innerHTML='💾 บันทึกข้อมูลทั้งหมด → Google Sheets';
+    loading.style.display='none';
+  }
+}
+function resetForm(){
+  document.getElementById('f-proj').value='';
+  document.getElementById('f-mentor').value='';
+  document.querySelectorAll('.score-opt').forEach(o=>o.className='score-opt');
+  Object.keys(formScores).forEach(k=>formScores[k]='');
+  Object.keys(riskChoices).forEach(k=>{riskChoices[k]={level:'',plan:''};});
+  document.querySelectorAll('.risk-opt').forEach(o=>o.classList.remove('sel'));
+  ['r-good','r-challenge','r-learn','r-next','r-need','out1','out2','out3','out4','out5'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.querySelectorAll('[id^="risk-plan-"]').forEach(el=>el.value='');
+}
+function buildTimeline(){
+  const c=document.getElementById('tl-list');if(!c)return;
+  [{proj:'P02 ชุมชน อัมรินทร์ 3 ผัง 4',mentor:'พี่น้อย',date:'27 พ.ค. 68',av2:4.8,av3:4.4,cls:'g',icon:'🟢',note:'ARE4 ผ่านสวย คณะทำงานเข้มแข็ง'},
+   {proj:'P04 ชุมชนเฟื่องฟ้าพัฒนา',mentor:'พี่จา',date:'26 พ.ค. 68',av2:4.6,av3:4.8,cls:'g',icon:'🟢',note:'กิจกรรมสุขภาพต่อเนื่อง แปลงปลูกพร้อม'},
+   {proj:'P01 ชุมชน ก.ส.บ.พัฒนา',mentor:'พี่อัง',date:'25 พ.ค. 68',av2:3.5,av3:3.6,cls:'a',icon:'🟡',note:'ARE3 เสร็จแล้ว รอ ARE4 เอกสารการเงินต้องตรวจ'},
+   {proj:'P09 สหกรณ์เคหสถานฟ้าใหม่',mentor:'พี่จา',date:'22 พ.ค. 68',av2:2.0,av3:1.8,cls:'r',icon:'🔴',note:'ต้องเร่งติดตามทุกด้าน ความเสี่ยงสูง'},
+  ].forEach(t=>{c.innerHTML+='<div class="tl-item"><div class="tl-dot '+t.cls+'">'+t.icon+'</div><div class="tl-body"><strong>'+t.proj+'</strong><div style="display:flex;gap:6px;margin-bottom:4px;flex-wrap:wrap"><span class="score-pill '+sC(t.av2)+'">ส่วน2: '+t.av2+'</span><span class="score-pill '+sC(t.av3)+'">ส่วน3: '+t.av3+'</span></div><div class="tl-meta">👤 '+t.mentor+' · 📅 '+t.date+'</div><div style="font-size:11px;color:var(--ink2);margin-top:4px">'+t.note+'</div></div></div>';});
+}
+function buildMentorDT(){
+  const t=document.getElementById('mentor-dt');if(!t)return;
+  t.innerHTML='<thead><tr><th>พี่เลี้ยง</th><th>โครงการ</th><th>ส่งแล้ว</th><th>ส่วน2</th><th>ส่วน3</th></tr></thead><tbody>'+
+    [{n:'พี่อัง',p:7,s:6,a2:3.8,a3:3.6},{n:'พี่น้อย',p:6,s:6,a2:4.4,a3:4.2},{n:'พี่ตุ่ม',p:6,s:5,a2:3.1,a3:2.9},{n:'พี่จา',p:6,s:6,a2:3.5,a3:3.3},{n:'นิก',p:5,s:4,a2:3.2,a3:3.0},{n:'ต้น',p:5,s:4,a2:3.6,a3:3.4}]
+    .map(d=>'<tr><td><strong>'+d.n+'</strong></td><td>'+d.p+'</td><td>'+d.s+'/'+d.p+' <span style="font-size:10px;color:'+(d.s<d.p?'var(--amber)':'var(--green)')+'">'+Math.round(d.s/d.p*100)+'%</span></td><td><span class="score-pill '+sC(d.a2)+'">'+d.a2+'</span></td><td><span class="score-pill '+sC(d.a3)+'">'+d.a3+'</span></td></tr>').join('')+'</tbody>';
+}
+function buildReflect(){
+  const c=document.getElementById('reflect-notes');if(!c)return;
+  [{proj:'P02 อัมรินทร์ 3 · พี่น้อย',good:'คณะทำงานจัด ARE4 ได้ดีมาก มีส่วนร่วมสูง',ch:'ไม่มี',next:'เตรียมเอกสารปิดโครงการ'},
+   {proj:'P09 ฟ้าใหม่ร่วมใจ · พี่จา',good:'เริ่มมีการประชุมคณะทำงานแล้ว',ch:'แปลงยังไม่ได้รับอนุมัติจากเทศบาล',next:'นัดหารือกับเทศบาลอีกครั้ง'}
+  ].forEach(n=>{c.innerHTML+='<div class="note-card"><strong>'+n.proj+'</strong><div>✅ สิ่งที่ทำได้ดี: '+n.good+'</div><div>⚠️ ความท้าทาย: '+n.ch+'</div><div>📌 เดือนหน้า: '+n.next+'</div></div>';});
+}
+
+const GAS_CODE = `// ═══ Google Apps Script (เวอร์ชันแก้ CORS) ═══
+// แทนที่โค้ดเดิมทั้งหมด แล้ว Deploy → New version
+
+function doPost(e) {
+  try {
+    const sheet = SpreadsheetApp
+      .getActiveSpreadsheet()
+      .getSheetByName('submissions');
+
+    // รับได้ทั้ง JSON string และ form data
+    let d;
+    try {
+      d = JSON.parse(e.postData.contents);
+    } catch(parseErr) {
+      d = JSON.parse(decodeURIComponent(e.postData.contents));
+    }
+
+    sheet.appendRow([
+      new Date(),
+      d.project_id, d.project_name, d.mentor, d.month,
+      d.s2_1,  d.s2_2,  d.s2_3,  d.s2_4,
+      d.s2_5,  d.s2_6,  d.s2_7,  d.s2_7_1,
+      d.s2_8,  d.s2_8_1, d.s2_9,  d.s2_9_1,
+      d.s2_10, d.s2_10_1, d.s2_11, d.s2_12,
+      d.s2_13, d.s2_14,
+      d.s3_1, d.s3_2, d.s3_3, d.s3_4, d.s3_5,
+      d.s3_6, d.s3_7, d.s3_8, d.s3_9, d.s3_10,
+      d.risk_1, d.risk_2, d.risk_3, d.risk_4,
+      d.risk_5, d.risk_6, d.risk_7,
+      d.risk_plan_1, d.risk_plan_2, d.risk_plan_3, d.risk_plan_4,
+      d.risk_plan_5, d.risk_plan_6, d.risk_plan_7,
+      d.out1, d.out2, d.out3, d.out4, d.out5,
+      d.reflect_good, d.reflect_challenge,
+      d.reflect_learn, d.reflect_next, d.reflect_need,
+    ]);
+
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'ok' }))
+      .setMimeType(ContentService.MimeType.JSON);
+
+  } catch(err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'error', message: err.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function doGet(e) {
+  return ContentService
+    .createTextOutput(JSON.stringify({ status: 'ok', ping: true }))
+    .setMimeType(ContentService.MimeType.JSON);
+}`;
+
+function copyScript(){navigator.clipboard.writeText(GAS_CODE).then(()=>showToast('📋 คัดลอก Apps Script Code แล้ว!'));}
+
+function P(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('pg-'+id).classList.add('active');
+  document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('active'));
+  const map={dash:'Dashboard',form:'กรอก',hist:'ประวัติ',cfg:'ตั้งค่า'};
+  document.querySelectorAll('.ntab').forEach(t=>{if(t.textContent.includes(map[id]))t.classList.add('active');});
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function setMonth(el){document.querySelectorAll('.month-tag').forEach(t=>t.classList.remove('active'));el.classList.add('active');}
+function showToast(msg){
+  const t=document.getElementById('toast');
+  document.getElementById('toast-msg').textContent=msg;
+  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),4000);
+}
+
+window.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
+  // Form items (ไม่ขึ้นกับ real data)
+  buildItems('sg-2a',S2.filter(x=>x.g==='a'));
+  buildItems('sg-2b',S2.filter(x=>x.g==='b'));
+  buildItems('sg-2c',S2.filter(x=>x.g==='c'));
+  buildItems('sg-2d',S2.filter(x=>x.g==='d'));
+  buildItems('sg-3a',S3.filter(x=>x.g==='a'));
+  buildItems('sg-3b',S3.filter(x=>x.g==='b'));
+  buildRiskForm();
+  loadConfig();
+  document.getElementById('script-code').textContent=GAS_CODE;
+  // โหลดข้อมูลจริงจาก Google Sheet
+  loadRealData();
+});
+
+
+// ═══════════════════════════════════════
+// LOAD REAL DATA FROM GOOGLE SHEET
+// ═══════════════════════════════════════
+
+async function loadRealData() {
+  const url = getScriptURL();
+  showDashLoading(true);
+
+  if (!url) {
+    // ไม่มี URL → ใช้ mock data แทน
+    console.log('No script URL, using mock data');
+    buildDashboard(null);
+    showDashLoading(false);
+    return;
+  }
+
+  try {
+    const resp = await fetch(url + '?action=getData', { method: 'GET' });
+    const result = await resp.json();
+
+    if (result.status === 'ok' && result.data && result.data.length > 1) {
+      // ข้ามแถว header (แถวแรก) แล้วแปลงเป็น object
+      const rows = result.data.slice(1).filter(r => r.project_id); // ข้าม header row
+      buildDashboard(rows);
+    } else {
+      buildDashboard(null);
+    }
+  } catch(e) {
+    console.warn('Could not load real data, using mock:', e.message);
+    buildDashboard(null);
+  }
+  showDashLoading(false);
+}
+
+function showDashLoading(on) {
+  const ids = ['dash-submitted','dash-missing','dash-risk','dash-s2avg','dash-s3avg'];
+  if (on) {
+    ids.forEach(id => { const el=document.getElementById(id); if(el) el.textContent='...'; });
+    const al = document.getElementById('alert-list');
+    if(al) al.innerHTML='<div style="color:var(--muted);font-size:12px;padding:20px;text-align:center">⏳ กำลังโหลดข้อมูลจาก Google Sheet...</div>';
+  }
+}
+
+function buildDashboard(realRows) {
+  // ถ้ามี real data → แปลงเป็น format เดียวกับ mock
+  if (realRows && realRows.length > 0) {
+    injectRealData(realRows);
+  }
+  // สร้าง dashboard ด้วยข้อมูลที่มี (real หรือ mock)
+  buildDashMetrics();
+  buildAlerts();
+  buildHM('hm2', S2, M_S2);
+  buildHM('hm3', S3, M_S3);
+  buildProgress();
+  buildRiskTable();
+  buildCharts();
+  buildTimeline(realRows);
+  buildMentorDT(realRows);
+  buildReflect(realRows);
+}
+
+function injectRealData(rows) {
+  // แปลง rows จาก Sheet → เขียนทับ M_S2, M_S3, M_RISK ด้วยข้อมูลจริง
+  // ใช้การกรอกล่าสุดของแต่ละโครงการ (กรณีกรอกซ้ำหลายครั้ง)
+  const latest = {}; // project_id → row ล่าสุด
+  rows.forEach(r => {
+    const pid = parseInt(r.project_id);
+    if (!pid) return;
+    if (!latest[pid] || new Date(r.timestamp) > new Date(latest[pid].timestamp)) {
+      latest[pid] = r;
+    }
+  });
+
+  // เคลียร์ mock แล้วใส่ข้อมูลจริง
+  Object.keys(M_S2).forEach(k => delete M_S2[k]);
+  Object.keys(M_S3).forEach(k => delete M_S3[k]);
+  Object.keys(M_RISK).forEach(k => delete M_RISK[k]);
+
+  Object.entries(latest).forEach(([pid, r]) => {
+    const id = parseInt(pid);
+    // ส่วนที่ 2 — 18 ข้อ
+    M_S2[id] = [
+      r.s2_1, r.s2_2, r.s2_3, r.s2_4, r.s2_5, r.s2_6,
+      r.s2_7, r.s2_7_1, r.s2_8, r.s2_8_1,
+      r.s2_9, r.s2_9_1, r.s2_10, r.s2_10_1,
+      r.s2_11, r.s2_12, r.s2_13, r.s2_14
+    ].map(v => parseFloat(v)||0).filter(v => v > 0).length > 0
+      ? [r.s2_1,r.s2_2,r.s2_3,r.s2_4,r.s2_5,r.s2_6,r.s2_7,r.s2_7_1,r.s2_8,r.s2_8_1,r.s2_9,r.s2_9_1,r.s2_10,r.s2_10_1,r.s2_11,r.s2_12,r.s2_13,r.s2_14].map(v=>parseFloat(v)||null).filter(v=>v)
+      : null;
+
+    // ส่วนที่ 3 — 10 ข้อ
+    M_S3[id] = [r.s3_1,r.s3_2,r.s3_3,r.s3_4,r.s3_5,r.s3_6,r.s3_7,r.s3_8,r.s3_9,r.s3_10]
+      .map(v=>parseFloat(v)||null).filter(v=>v);
+
+    // ความเสี่ยง
+    M_RISK[id] = [r.risk_1,r.risk_2,r.risk_3,r.risk_4,r.risk_5,r.risk_6,r.risk_7]
+      .map(v => v||'g');
+
+    if (!M_S2[id] || M_S2[id].length === 0) delete M_S2[id];
+    if (!M_S3[id] || M_S3[id].length === 0) delete M_S3[id];
+  });
+}
+
+function buildTimeline(realRows) {
+  const c = document.getElementById('tl-list'); if(!c) return;
+  c.innerHTML = '';
+
+  if (realRows && realRows.length > 0) {
+    // เรียงตาม timestamp ล่าสุด
+    const sorted = [...realRows].sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0,8);
+    sorted.forEach(r => {
+      const s2vals = [r.s2_1,r.s2_2,r.s2_3,r.s2_4,r.s2_5,r.s2_6,r.s2_7,r.s2_7_1,r.s2_8,r.s2_8_1,r.s2_9,r.s2_9_1,r.s2_10,r.s2_10_1,r.s2_11,r.s2_12,r.s2_13,r.s2_14].map(v=>parseFloat(v)).filter(v=>v);
+      const s3vals = [r.s3_1,r.s3_2,r.s3_3,r.s3_4,r.s3_5,r.s3_6,r.s3_7,r.s3_8,r.s3_9,r.s3_10].map(v=>parseFloat(v)).filter(v=>v);
+      const av2 = avg(s2vals); const av3 = avg(s3vals);
+      const cls = av2 >= 4 ? 'g' : av2 >= 3 ? 'a' : 'r';
+      const icon = av2 >= 4 ? '🟢' : av2 >= 3 ? '🟡' : '🔴';
+      const ts = new Date(r.timestamp);
+      const dateStr = ts.toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'});
+      const note = r.reflect_good || r.reflect_challenge || '(ไม่มีบันทึก)';
+      c.innerHTML += '<div class="tl-item"><div class="tl-dot '+cls+'">'+icon+'</div><div class="tl-body"><strong>P'+pad(r.project_id)+' '+r.project_name+'</strong><div style="display:flex;gap:6px;margin-bottom:4px;flex-wrap:wrap">'+(av2?'<span class="score-pill '+sC(av2)+'">ส่วน2: '+av2+'</span>':'')+(av3?'<span class="score-pill '+sC(av3)+'">ส่วน3: '+av3+'</span>':'')+'</div><div class="tl-meta">👤 '+r.mentor+' · 📅 '+dateStr+'</div><div style="font-size:11px;color:var(--ink2);margin-top:4px">'+note.substring(0,80)+(note.length>80?'...':'')+'</div></div></div>';
+    });
+  } else {
+    // mock data fallback
+    [{proj:'P02 ชุมชน อัมรินทร์ 3 ผัง 4',mentor:'พี่น้อย',date:'27 พ.ค. 68',av2:4.8,av3:4.4,cls:'g',icon:'🟢',note:'ARE4 ผ่านสวย คณะทำงานเข้มแข็ง'},
+     {proj:'P04 ชุมชนเฟื่องฟ้าพัฒนา',mentor:'พี่จา',date:'26 พ.ค. 68',av2:4.6,av3:4.8,cls:'g',icon:'🟢',note:'กิจกรรมสุขภาพต่อเนื่อง แปลงปลูกพร้อม'},
+     {proj:'P01 ชุมชน ก.ส.บ.พัฒนา',mentor:'พี่อัง',date:'25 พ.ค. 68',av2:3.5,av3:3.6,cls:'a',icon:'🟡',note:'ARE3 เสร็จแล้ว รอ ARE4 เอกสารการเงินต้องตรวจ'},
+     {proj:'P09 สหกรณ์เคหสถานฟ้าใหม่',mentor:'พี่จา',date:'22 พ.ค. 68',av2:2.0,av3:1.8,cls:'r',icon:'🔴',note:'ต้องเร่งติดตามทุกด้าน ความเสี่ยงสูง'},
+    ].forEach(t=>{c.innerHTML+='<div class="tl-item"><div class="tl-dot '+t.cls+'">'+t.icon+'</div><div class="tl-body"><strong>'+t.proj+'</strong><div style="display:flex;gap:6px;margin-bottom:4px;flex-wrap:wrap"><span class="score-pill '+sC(t.av2)+'">ส่วน2: '+t.av2+'</span><span class="score-pill '+sC(t.av3)+'">ส่วน3: '+t.av3+'</span></div><div class="tl-meta">👤 '+t.mentor+' · 📅 '+t.date+'</div><div style="font-size:11px;color:var(--ink2);margin-top:4px">'+t.note+'</div></div></div>';});
+  }
+}
+
+function buildMentorDT(realRows) {
+  const t = document.getElementById('mentor-dt'); if(!t) return;
+
+  if (realRows && realRows.length > 0) {
+    // สรุปตามชื่อพี่เลี้ยง
+    const mentorMap = {};
+    realRows.forEach(r => {
+      if (!r.mentor) return;
+      if (!mentorMap[r.mentor]) mentorMap[r.mentor] = { rows:[], projects: new Set() };
+      mentorMap[r.mentor].rows.push(r);
+      mentorMap[r.mentor].projects.add(r.project_id);
+    });
+    t.innerHTML = '<thead><tr><th>พี่เลี้ยง</th><th>กรอกแล้ว</th><th>โครงการ</th><th>ส่วน2 avg</th><th>ส่วน3 avg</th></tr></thead><tbody>' +
+      Object.entries(mentorMap).map(([name, info]) => {
+        const s2avgs = info.rows.map(r=>{
+          const vals=[r.s2_1,r.s2_2,r.s2_3,r.s2_4,r.s2_5,r.s2_6,r.s2_7,r.s2_7_1,r.s2_8,r.s2_8_1,r.s2_9,r.s2_9_1,r.s2_10,r.s2_10_1,r.s2_11,r.s2_12,r.s2_13,r.s2_14].map(v=>parseFloat(v)).filter(v=>v);
+          return avg(vals);
+        }).filter(v=>v);
+        const s3avgs = info.rows.map(r=>{
+          const vals=[r.s3_1,r.s3_2,r.s3_3,r.s3_4,r.s3_5,r.s3_6,r.s3_7,r.s3_8,r.s3_9,r.s3_10].map(v=>parseFloat(v)).filter(v=>v);
+          return avg(vals);
+        }).filter(v=>v);
+        const a2=avg(s2avgs); const a3=avg(s3avgs);
+        return '<tr><td><strong>'+name+'</strong></td><td>'+info.rows.length+' ครั้ง</td><td>'+info.projects.size+' โครงการ</td><td>'+(a2?'<span class="score-pill '+sC(a2)+'">'+a2+'</span>':'-')+'</td><td>'+(a3?'<span class="score-pill '+sC(a3)+'">'+a3+'</span>':'-')+'</td></tr>';
+      }).join('') + '</tbody>';
+  } else {
+    t.innerHTML='<thead><tr><th>พี่เลี้ยง</th><th>โครงการ</th><th>ส่งแล้ว</th><th>ส่วน2</th><th>ส่วน3</th></tr></thead><tbody>'+
+      [{n:'พี่อัง',p:7,s:6,a2:3.8,a3:3.6},{n:'พี่น้อย',p:6,s:6,a2:4.4,a3:4.2},{n:'พี่ตุ่ม',p:6,s:5,a2:3.1,a3:2.9},{n:'พี่จา',p:6,s:6,a2:3.5,a3:3.3},{n:'นิก',p:5,s:4,a2:3.2,a3:3.0},{n:'ต้น',p:5,s:4,a2:3.6,a3:3.4}]
+      .map(d=>'<tr><td><strong>'+d.n+'</strong></td><td>'+d.p+'</td><td>'+d.s+'/'+d.p+'</td><td><span class="score-pill '+sC(d.a2)+'">'+d.a2+'</span></td><td><span class="score-pill '+sC(d.a3)+'">'+d.a3+'</span></td></tr>').join('')+'</tbody>';
+  }
+}
+
+function buildReflect(realRows) {
+  const c = document.getElementById('reflect-notes'); if(!c) return;
+  c.innerHTML = '';
+
+  if (realRows && realRows.length > 0) {
+    const sorted = [...realRows].sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp)).slice(0,4);
+    sorted.forEach(r => {
+      if (!r.reflect_good && !r.reflect_challenge && !r.reflect_next) return;
+      c.innerHTML += '<div class="note-card"><strong>P'+pad(r.project_id)+' '+r.project_name+' · '+r.mentor+'</strong>'
+        +(r.reflect_good?'<div>✅ สิ่งที่ทำได้ดี: '+r.reflect_good+'</div>':'')
+        +(r.reflect_challenge?'<div>⚠️ ความท้าทาย: '+r.reflect_challenge+'</div>':'')
+        +(r.reflect_next?'<div>📌 เดือนหน้า: '+r.reflect_next+'</div>':'')
+        +'</div>';
+    });
+  } else {
+    [{proj:'P02 อัมรินทร์ 3 · พี่น้อย',good:'คณะทำงานจัด ARE4 ได้ดีมาก',ch:'ไม่มี',next:'เตรียมเอกสารปิดโครงการ'},
+     {proj:'P09 ฟ้าใหม่ร่วมใจ · พี่จา',good:'เริ่มมีการประชุมคณะทำงาน',ch:'แปลงยังไม่ได้รับอนุมัติ',next:'นัดหารือกับเทศบาล'}
+    ].forEach(n=>{c.innerHTML+='<div class="note-card"><strong>'+n.proj+'</strong><div>✅ สิ่งที่ทำได้ดี: '+n.good+'</div><div>⚠️ ความท้าทาย: '+n.ch+'</div><div>📌 เดือนหน้า: '+n.next+'</div></div>';});
+  }
+}
+
+</script>
+</body>
+</html>
